@@ -49,8 +49,8 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden py-3 px-4 border-t border-gray-700">
             <Link href="/" className="block py-2 hover:text-blue-300">Dashboard</Link>
-            <Link href="/docs" className="block py-2 hover:text-blue-300">Documentation</Link>
-            <a href="https://github.com/yourusername/crypto-tracker" className="block py-2 hover:text-blue-300" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <Link href="https://github.com/Lydiawaka/crypto-tracker/tree/main/docs" className="block py-2 hover:text-blue-300">Documentation</Link>
+            <a href="https://github.com/Lydiawaka/crypto-tracker" className="block py-2 hover:text-blue-300" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         )}
       </div>
