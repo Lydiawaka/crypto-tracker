@@ -1,101 +1,120 @@
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import CryptoTable from './components/CryptoTable'
+import CryptoChart from './components/CryptoChart'
+import PriceCard from './components/PriceCard'
+import { Crypto } from '@/types'
+import Navbar from './components/Navbar'
+import { RefreshCw } from 'lucide-react'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [cryptos, setCryptos] = useState<Crypto[]>([])
+  const [selectedCrypto, setSelectedCrypto] = useState<Crypto | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState<boolean>(false)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const fetchData = async () => {
+    try {
+      setRefreshing(true)
+      const response = await fetch('/api/prices')
+      if (!response.ok) {
+        throw new Error('Failed to fetch crypto data')
+      }
+      const data: Crypto[] = await response.json()
+      setCryptos(data)
+      if (!selectedCrypto && data.length > 0) {
+        setSelectedCrypto(data[0])
+      } else if (selectedCrypto) {
+        // Preserve the selected crypto but update its data
+        const updatedSelected = data.find(c => c.id === selectedCrypto.id)
+        if (updatedSelected) {
+          setSelectedCrypto(updatedSelected)
+        }
+      }
+      setLoading(false)
+      setRefreshing(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+    // Set up polling for real-time updates
+    const interval = setInterval(fetchData, 60000) // Update every minute
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleRefresh = () => {
+    fetchData()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Error!</strong>
+        <span className="block sm:inline"> {error}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      <Navbar />
+      <section className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-6">Cryptocurrency Price Tracker</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
+            Live prices and charts for the top cryptocurrencies. Data is refreshed every minute.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button 
+          onClick={handleRefresh} 
+          className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+          disabled={refreshing}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </section>
+
+      {/* Cards for quick price overview */}
+      <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {cryptos.map(crypto => (
+          <PriceCard 
+            key={crypto.id} 
+            crypto={crypto} 
+            onClick={() => setSelectedCrypto(crypto)}
+            isSelected={selectedCrypto?.id === crypto.id}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </section>
+
+      {/* Chart for selected crypto */}
+      {selectedCrypto && (
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</h2>
+          <CryptoChart cryptoId={selectedCrypto.id} />
+        </section>
+      )}
+
+      {/* Table with all data */}
+      <section className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">All Cryptocurrencies</h2>
+        <CryptoTable data={cryptos} onSelect={setSelectedCrypto} />
+      </section>
     </div>
-  );
+  )
 }
