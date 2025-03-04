@@ -5,14 +5,16 @@ import CryptoChart from './components/CryptoChart'
 import PriceCard from './components/PriceCard'
 import { Crypto } from '@/types'
 import Navbar from './components/Navbar'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Search } from 'lucide-react'
 
 export default function Home() {
   const [cryptos, setCryptos] = useState<Crypto[]>([])
+  const [filteredCryptos, setFilteredCryptos] = useState<Crypto[]>([])
   const [selectedCrypto, setSelectedCrypto] = useState<Crypto | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   const fetchData = async () => {
     try {
@@ -23,6 +25,8 @@ export default function Home() {
       }
       const data: Crypto[] = await response.json()
       setCryptos(data)
+      filterCryptos(data, searchQuery)
+      
       if (!selectedCrypto && data.length > 0) {
         setSelectedCrypto(data[0])
       } else if (selectedCrypto) {
@@ -39,6 +43,27 @@ export default function Home() {
       setLoading(false)
       setRefreshing(false)
     }
+  }
+
+  const filterCryptos = (cryptoList: Crypto[], query: string) => {
+    if (!query.trim()) {
+      setFilteredCryptos(cryptoList)
+      return
+    }
+    
+    const lowercaseQuery = query.toLowerCase().trim()
+    const filtered = cryptoList.filter(crypto => 
+      crypto.name.toLowerCase().includes(lowercaseQuery) || 
+      crypto.symbol.toLowerCase().includes(lowercaseQuery)
+    )
+    
+    setFilteredCryptos(filtered)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    setSearchQuery(query)
+    filterCryptos(cryptos, query)
   }
 
   useEffect(() => {
@@ -73,33 +98,53 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <Navbar />
-      <section className="flex justify-between items-center">
+      <section className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-6">Cryptocurrency Price Tracker</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
+          <h1 className="text-3xl font-bold mb-2">Cryptocurrency Price Tracker</h1>
+          <p className="text-gray-600 dark:text-gray-300">
             Live prices and charts for the top cryptocurrencies. Data is refreshed every minute.
           </p>
         </div>
-        <button 
-          onClick={handleRefresh} 
-          className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
-          disabled={refreshing}
-        >
-          <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search cryptocurrencies..."
+              className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+          <button 
+            onClick={handleRefresh} 
+            className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </section>
 
       {/* Cards for quick price overview */}
       <section className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cryptos.map(crypto => (
-          <PriceCard 
-            key={crypto.id} 
-            crypto={crypto} 
-            onClick={() => setSelectedCrypto(crypto)}
-            isSelected={selectedCrypto?.id === crypto.id}
-          />
-        ))}
+        {filteredCryptos.length > 0 ? (
+          filteredCryptos.map(crypto => (
+            <PriceCard 
+              key={crypto.id} 
+              crypto={crypto} 
+              onClick={() => setSelectedCrypto(crypto)}
+              isSelected={selectedCrypto?.id === crypto.id}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+            No cryptocurrencies match your search criteria.
+          </div>
+        )}
       </section>
 
       {/* Chart for selected crypto */}
@@ -113,7 +158,10 @@ export default function Home() {
       {/* Table with all data */}
       <section className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-4">All Cryptocurrencies</h2>
-        <CryptoTable data={cryptos} onSelect={setSelectedCrypto} />
+        <CryptoTable 
+          data={filteredCryptos} 
+          onSelect={setSelectedCrypto} 
+        />
       </section>
     </div>
   )
