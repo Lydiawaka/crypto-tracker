@@ -1,30 +1,23 @@
-import { NextResponse } from 'next/server'
-import { ChartData } from '@/types'
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+import { NextRequest, NextResponse } from "next/server"
+import { ChartData } from "@/types"
 
 export async function GET(
-  request: Request,
-  { params }: RouteParams
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = await params
+    const { id } = context.params
     const { searchParams } = new URL(request.url)
-    const days = searchParams.get('days') || '7'
+    const days = searchParams.get("days") || "7"
 
     const response = await fetch(
       `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`,
       {
         headers: {
-          'Accept': 'application/json',
-          // Add your API key if you have one
-          // 'x-cg-api-key': process.env.COINGECKO_API_KEY as string
+          Accept: "application/json",
+          
         },
-        next: { revalidate: 3600 } // Cache for 1 hour
+        next: { revalidate: 3600 }, 
       }
     )
 
@@ -35,9 +28,9 @@ export async function GET(
     const data: ChartData = await response.json()
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Error fetching price history:', error)
+    console.error("Error fetching price history:", error)
     return NextResponse.json(
-      { error: 'Failed to fetch price history' },
+      { error: "Failed to fetch price history" },
       { status: 500 }
     )
   }
