@@ -22,9 +22,9 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/" className="hover:text-blue-300">Dashboard</Link>
-            <Link href="/docs" className="hover:text-blue-300">Documentation</Link>
-            <a href="https://github.com/Lydiawaka/crypto-tracker" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300">GitHub</a>
+            <Link href="/" className="hover:text-blue-300">Home</Link>
+            <Link href="/markets" className="hover:text-blue-300">Live Prices</Link>
+            <Link href="/converter" className="hover:text-blue-300">Converter</Link>
           </div>
 
           {/* Mobile menu button */}
@@ -48,9 +48,9 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-3 px-4 border-t border-gray-700">
-            <Link href="/" className="block py-2 hover:text-blue-300">Dashboard</Link>
-            <Link href="https://github.com/Lydiawaka/crypto-tracker/tree/main/docs" className="block py-2 hover:text-blue-300">Documentation</Link>
-            <a href="https://github.com/Lydiawaka/crypto-tracker" className="block py-2 hover:text-blue-300" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <Link href="/" className="block py-2 hover:text-blue-300">Home</Link>
+            <Link href="/markets" className="block py-2 hover:text-blue-300">Live Prices</Link>
+            <Link href="/converter" className="block py-2 hover:text-blue-300" >Converter</Link>
           </div>
         )}
       </div>
