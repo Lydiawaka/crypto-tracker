@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { ChartData } from "@/types"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params
+    const { id } = await params  
     const { searchParams } = new URL(request.url)
     const days = searchParams.get("days") || "7"
 
@@ -22,7 +22,6 @@ export async function GET(
         headers: {
           Accept: "application/json",
         },
-        // ✅ Move `next` outside headers — it’s not a header
         next: { revalidate: 3600 },
       }
     )
